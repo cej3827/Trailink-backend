@@ -23,14 +23,15 @@ exports.getBookmarks = async (req, res) => {
   }
 };
 
+//북마크 추가
 exports.addBookmark = async (req, res) => {
   try {
-    const { title, url, description, category_id } = req.body;
-    const result = await query(
-      'INSERT INTO bookmarks (title, url, description, category_id, user_id) VALUES (?, ?, ?, ?, ?)',
-      [title, url, description, category_id, req.user.id]
+    const { category_id, bookmark_title, bookmark_url, bookmark_description } = req.body;
+    const result = await pool.query(
+      'INSERT INTO bookmark (category_id, bookmark_title, bookmark_url, bookmark_description) VALUES (?, ?, ?, ?)',
+      [category_id, bookmark_title, bookmark_url, bookmark_description]
     );
-    res.json({ id: result.insertId, title, url, description, category_id, user_id: req.user.id });
+    res.json(req.body);
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server error');
