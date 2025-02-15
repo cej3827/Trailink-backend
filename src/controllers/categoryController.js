@@ -76,11 +76,14 @@ exports.getCategories = async (req, res) => {
   }
 };
 
+//카테고리 추가
 exports.addCategory = async (req, res) => {
   try {
-    const { name } = req.body;
-    const result = await query('INSERT INTO categories (name, user_id) VALUES (?, ?)', [name, req.user.id]);
-    res.json({ id: result.insertId, name, user_id: req.user.id });
+    const { user_id } = req.user;
+    const { category_name, category_description } = req.body;
+    await pool.query('INSERT INTO category (user_id, category_name, category_description) VALUES (?, ?, ?)', [user_id, category_name, category_description]);
+    // res.json({ id: result.insertId, category_name, category_description, user_id: req.user.id });
+    res.json(req.body);
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server error');

@@ -5,7 +5,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 
 router.get('/:categoryId', getCategoryBookmarks)
 router.get('/', authMiddleware, getCategories);
-router.post('/', addCategory);
+router.post('/', authMiddleware, addCategory);
 router.delete('/:id', deleteCategory);
 
 module.exports = router;
