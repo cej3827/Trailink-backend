@@ -63,10 +63,11 @@ exports.getCategoryBookmarks = async (req, res) => {
   }
 };
 
-
+//특정 사용자의 카테고리 가져오기
 exports.getCategories = async (req, res) => {
+  const user_id = req.query.userId;
+  const { requesterUserId } = req.user;
   try {
-    const { user_id } = req.user;
     const [categories] = await pool.query('SELECT category_id, category_name FROM category WHERE user_id = ?', [user_id]);
     console.log(categories);
     res.json(categories);
