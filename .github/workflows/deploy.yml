@@ -1,0 +1,23 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+  steps:
+    - name: Connect & Deploy to EC2
+      uses: appleboy/ssh-action@v1.2.2
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.KEY }}
+        port: ${{ secrets.PORT }}
+        script: |
+          cd /home/ec2-user/Trailink-backend
+          git pull origin main
+          npm install
+          pm2 restart server
