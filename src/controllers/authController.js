@@ -4,6 +4,7 @@ const pool = require('../config/db');
 
 // 회원가입
 exports.register = async (req, res) => {
+  console.log(req.body);
   try {
     const { user_id, user_password, user_name } = req.body;
 
