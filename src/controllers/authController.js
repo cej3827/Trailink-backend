@@ -8,8 +8,8 @@ exports.register = async (req, res) => {
     const { user_id, user_password, user_name } = req.body;
 
     // 아이디
-    const existingUser = await pool.query('SELECT * FROM user WHERE user_id = ?', [user_id]);
-    if (existingUser.length > 0) {
+    const [rows] = await pool.query('SELECT * FROM user WHERE user_id = ?', [user_id]);
+    if (rows.length > 0) {
       return res.status(400).json({ msg: 'User already exists' });
     }
 
