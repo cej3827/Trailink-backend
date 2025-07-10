@@ -7,7 +7,12 @@ exports.register = async (req, res) => {
   try {
     const { user_id, user_password, user_name } = req.body;
 
-    // 아이디
+    // 입력값 체크
+    if (!user_id || !user_password || !user_name) {
+      return res.status(400).json({ msg: '모든 필드를 입력해 주세요.'});
+    }
+
+    // 아이디 중복 체크
     const [rows] = await pool.query('SELECT * FROM user WHERE user_id = ?', [user_id]);
     if (rows.length > 0) {
       return res.status(400).json({ msg: 'User already exists' });
@@ -26,7 +31,7 @@ exports.register = async (req, res) => {
     // JWT 생성
     const payload = {
       user: {
-        user_id: newUser[0].user_id,
+        user_id: newUser[0][0].user_id,
       },
     };
 
