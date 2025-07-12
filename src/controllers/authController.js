@@ -49,21 +49,21 @@ exports.register = async (req, res) => {
 // 로그인
 exports.login = async (req, res) => {
   try {
-    const { user_id, user_password } = req.body;
+    const { user_id, user_password } = await req.body;
 
     // 사용자 조회
     const [rows] = await pool.query('SELECT * FROM user WHERE user_id = ?', [user_id]);
     console.log('User data from DB:', rows); // 디버깅
 
     if (!rows || rows.length === 0) {
-      return res.status(400).json({ msg: 'Invalid Credentials' });
+      return res.status(400).json({ msg: '존재하지 않는 아이디입니다.' });
     }
     const user = rows[0];
 
     // 비밀번호 확인
     const isMatch = await bcrypt.compare(user_password, user.user_password);
     if (!isMatch) {
-      return res.status(400).json({ msg: 'Invalid Credentials' });
+      return res.status(400).json({ msg: '비밀번호가 일치하지 않습니다.' });
     }
 
     // JWT 생성
