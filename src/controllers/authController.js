@@ -6,7 +6,7 @@ const pool = require('../config/db');
 exports.register = async (req, res) => {
   console.log(req.body);
   try {
-    const { user_id, user_password, user_name } = req.body;
+    const { user_id, user_password, user_name } = await req.body;
 
     // 입력값 체크
     if (!user_id || !user_password || !user_name) {
