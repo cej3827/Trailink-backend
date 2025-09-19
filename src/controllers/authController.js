@@ -36,7 +36,7 @@ exports.register = async (req, res) => {
       },
     };
 
-    jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: 3600 }, (err, token) => {
+    jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' }, (err, token) => {
       if (err) throw err;
       res.json({ token });
     });
@@ -73,14 +73,14 @@ exports.login = async (req, res) => {
       },
     };
 
-    jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: 3600 }, (err, token) => {
+    jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' }, (err, token) => {
       if (err) throw err;
 
       res.json({
         success: true,
         message: "Login successful",
         token,
-        data: {
+        user: {
           user_id: user.user_id,
           user_name: user.user_name,
           profile_img: user.profile_img,
@@ -92,3 +92,45 @@ exports.login = async (req, res) => {
     res.status(500).send('Server error');
   }
 };
+
+// 현재 사용자 정보 조회
+exports.getCurrentUser = async (req, res) => {
+  try {
+    const { user_id } = req.user;
+
+    // 데이터베이스에서 최신 사용자 정보 조회
+    const [rows] = await pool.query(
+      'SELECT user_id, user_name, profile_img FROM user WHERE user_id = ?', 
+      [user_id]
+    );
+
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        msg: '사용자를 찾을 수 없습니다',
+        error: 'USER_NOT_FOUND'
+      });
+    }
+
+    const user = rows[0];
+
+    res.json({
+      success: true,
+      message: '사용자 정보 조회 성공',
+      user: {
+        id: user.user_id,
+        name: user.user_name,
+        profile_img: user.profile_img,
+      }
+    });
+    
+  } catch (error) {
+    console.error('사용자 정보 조회 실패: ', error);
+
+    res.status(500).json({
+      success: false,
+      msg: '사용자 정보 조회 중 오류가 발생했습니다',
+      error: 'SERVER_ERROR'
+    });
+  }
+}
