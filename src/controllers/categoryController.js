@@ -63,16 +63,38 @@ exports.getCategoryBookmarks = async (req, res) => {
   }
 };
 
-//특정 사용자의 카테고리 가져오기
+// 사용자의 카테고리 가져오기
 exports.getCategories = async (req, res) => {
   const user_id = req.query.userId;
-  const { requesterUserId } = req.user;
+  console.log(`카테고리 조회 요청 - 사용자: ${user_id}`);
+
   try {
-    const [categories] = await pool.query('SELECT category_id, category_name FROM category WHERE user_id = ?', [user_id]);
-    console.log(categories);
-    res.json(categories);
-  } catch (err) {
-    console.error(err.message);
+    const [categories] = await pool.query(`
+      SELECT 
+        c.category_id, 
+        c.category_name, 
+        c.category_description,
+        c.created_at,
+        c.updated_at,
+        COUNT(b.bookmark_id) as bookmark_count
+      FROM category c
+      LEFT JOIN bookmark b ON c.category_id = b.category_id
+      WHERE c.user_id = ?
+      GROUP BY c.category_id, c.category_name, c.category_description, c.created_at, c.updated_at
+      ORDER BY c.created_at DESC
+      `, [user_id]);
+
+    console.log('조회된 카테고리:', categories);
+
+    res.json({
+      success: true,
+      message: '카테고리 목록 조회 성공',
+      categories: categories
+    });
+
+  } catch (error) {
+    console.error('카테고리 조회 오류:', error.message);
+    
     res.status(500).send('Server error');
   }
 };
