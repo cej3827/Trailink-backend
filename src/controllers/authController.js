@@ -83,7 +83,7 @@ exports.login = async (req, res) => {
         user: {
           user_id: user.user_id,
           user_name: user.user_name,
-          profile_img: user.profile_img,
+          user_profile_img: user.user_profile_img,
         },
       });
     });
@@ -118,9 +118,9 @@ exports.getCurrentUser = async (req, res) => {
       success: true,
       message: '사용자 정보 조회 성공',
       user: {
-        id: user.user_id,
-        name: user.user_name,
-        profile_img: user.profile_img,
+        user_id: user.user_id,
+        user_name: user.user_name,
+        user_profile_img: user.user_profile_img,
       }
     });
     
