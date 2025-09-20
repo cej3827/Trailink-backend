@@ -65,7 +65,7 @@ exports.getCategoryBookmarks = async (req, res) => {
 
 // 사용자의 카테고리 가져오기
 exports.getCategories = async (req, res) => {
-  const user_id = req.query.userId;
+  const { user_id } = req.user;
   console.log(`카테고리 조회 요청 - 사용자: ${user_id}`);
 
   try {
@@ -94,7 +94,7 @@ exports.getCategories = async (req, res) => {
 
   } catch (error) {
     console.error('카테고리 조회 오류:', error.message);
-    
+
     res.status(500).send('Server error');
   }
 };
