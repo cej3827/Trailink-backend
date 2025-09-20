@@ -52,7 +52,7 @@ exports.login = async (req, res) => {
     const { user_id, user_password } = await req.body;
 
     // 사용자 조회
-    const [rows] = await pool.query('SELECT user_id, user_name, user_profile_img FROM user WHERE user_id = ?', [user_id]);
+    const [rows] = await pool.query('SELECT * FROM user WHERE user_id = ?', [user_id]);
     console.log('User data from DB:', rows); // 디버깅
 
     if (!rows || rows.length === 0) {
