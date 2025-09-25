@@ -47,3 +47,50 @@ exports.deleteBookmark = async (req, res) => {
     res.status(500).send('Server error');
   }
 };
+
+// 최근 북마크
+exports.recentBookmark = async (req, res) => {
+  try {
+    const { user_id } = req.user;
+    const limit = parseInt(req.query.limit) || 8;
+    
+    // limit 값 검증 (최대 50개)
+    const safeLimit = Math.min(Math.max(limit, 1), 50);
+
+    console.log(`최근 북마크 조회 - 사용자: ${user_id}, 개수: ${safeLimit}`);
+
+    const query = `
+      SELECT 
+        b.bookmark_id,
+        b.bookmark_title,
+        b.bookmark_url,
+        b.bookmark_description,
+        b.created_at,
+        b.updated_at,
+        c.category_name,
+        c.category_id
+      FROM bookmarks b
+      LEFT JOIN category c ON b.category_id = c.category_id
+      WHERE b.user_id = ?
+      ORDER BY b.updated_at DESC
+      LIMIT ?
+    `;
+
+    const [bookmarks] = await pool.query(query, [user_id, safeLimit]);
+
+    res.json({
+      success: true,
+      message: '최근 북마크 조회 성공',
+      bookmarks: bookmarks,
+      total: bookmarks.length
+    });
+
+  } catch (error) {
+    console.error('최근 북마크 조회 오류:', error);
+    res.status(500).json({
+      success: false,
+      message: '최근 북마크 조회 중 오류가 발생했습니다',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+}
