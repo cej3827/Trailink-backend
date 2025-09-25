@@ -69,7 +69,7 @@ exports.recentBookmark = async (req, res) => {
         b.updated_at,
         c.category_name,
         c.category_id
-      FROM bookmarks b
+      FROM bookmark b
       LEFT JOIN category c ON b.category_id = c.category_id
       WHERE b.user_id = ?
       ORDER BY b.updated_at DESC
