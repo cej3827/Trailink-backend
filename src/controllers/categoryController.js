@@ -1,65 +1,102 @@
 const pool = require('../config/db');
 
-// 카테고리별 북마크 가져오기
-// exports.getCategoryBookmarks = async (req, res) => {
-//   try {
-//     const { categoryId } = req.params;
-//     // console.log('Category ID:', categoryId); // 확인을 위한 로그 추가
-//     const [rows] = await pool.query('SELECT * FROM bookmark WHERE category_id = ?', [categoryId]);
-//     res.json(rows);
-//   } catch (err) {
-//     console.error('Error fetching category bookmarks:', err);
-//     res.status(500).send('Server error');
-//   }
-// };
+// 카테고리별 북마크 가져오기 (페이지네이션, 정렬 포함)
 exports.getCategoryBookmarks = async (req, res) => {
   try {
-    // const { categoryId } = req.params;
     const { categoryId } = req.params;
-    console.log('Category ID:', categoryId); // 확인을 위한 로그 추가
+    const { user_id } = req.user;
+    
+    // 쿼리 파라미터 파싱
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const sortBy = req.query.sortBy || 'latest';
+    
+    // 페이지네이션 계산
+    const offset = (page - 1) * limit;
+    
+    // 정렬 조건 설정
+    let orderBy = '';
+    switch (sortBy) {
+      case 'latest':
+        orderBy = 'b.created_at DESC';
+        break;
+      case 'oldest':
+        orderBy = 'b.created_at ASC';
+        break;
+      case 'name':
+        orderBy = 'b.bookmark_title ASC';
+        break;
+      default:
+        orderBy = 'b.created_at DESC';
+    }
+    
+    console.log(`카테고리별 북마크 조회 - 사용자: ${user_id}, 카테고리: ${categoryId}, 페이지: ${page}, 정렬: ${sortBy}`);
 
-    // 조인 쿼리로 카테고리와 해당 북마크 데이터를 가져오기
-    const [rows] = await pool.query(
-      `SELECT 
-        c.category_id, 
-        c.category_name, 
-        b.bookmark_id, 
-        b.bookmark_title, 
-        b.bookmark_url, 
-        b.bookmark_description 
-      FROM 
-        category c
-      LEFT JOIN 
-        bookmark b 
-      ON 
-        c.category_id = b.category_id
-      WHERE 
-        c.category_id = ?`,
-      [categoryId]
+    // 먼저 카테고리가 해당 사용자의 것인지 확인
+    const [categoryCheck] = await pool.query(
+      'SELECT category_id FROM category WHERE category_id = ? AND user_id = ?',
+      [categoryId, user_id]
     );
 
-    if (rows.length === 0) {
-      return res.status(404).json({ message: 'Category not found' });
+    if (categoryCheck.length === 0) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Category not found or access denied' 
+      });
     }
 
-    // 데이터 가공
-    const category = {
-      category_id: rows[0].category_id,
-      category_name: rows[0].category_name,
-      bookmarks: rows
-        .filter((row) => row.bookmark_id !== null) // bookmark 데이터가 없는 경우 필터링
-        .map((row) => ({
-          bookmark_id: row.bookmark_id,
-          bookmark_title: row.bookmark_title,
-          bookmark_url: row.bookmark_url,
-          bookmark_description: row.bookmark_description,
-        })),
-    };
+    // 전체 북마크 개수 조회
+    const [countResult] = await pool.query(
+      'SELECT COUNT(*) as total FROM bookmark WHERE category_id = ?',
+      [categoryId]
+    );
+    const totalBookmarks = countResult[0].total;
 
-    res.json(category);
+    // 페이지네이션된 북마크 조회
+    const [bookmarks] = await pool.query(
+      `SELECT 
+        b.bookmark_id,
+        b.bookmark_title,
+        b.bookmark_url,
+        b.bookmark_description,
+        b.created_at,
+        b.updated_at
+      FROM bookmark b
+      WHERE b.category_id = ?
+      ORDER BY ${orderBy}
+      LIMIT ? OFFSET ?`,
+      [categoryId, limit, offset]
+    );
+
+    // 페이지네이션 정보 계산
+    const totalPages = Math.ceil(totalBookmarks / limit);
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1;
+
+    res.json({
+      success: true,
+      message: '카테고리별 북마크 조회 성공',
+      data: {
+        bookmarks: bookmarks,
+        pagination: {
+          currentPage: page,
+          totalPages: totalPages,
+          totalBookmarks: totalBookmarks,
+          limit: limit,
+          hasNextPage: hasNextPage,
+          hasPrevPage: hasPrevPage
+        },
+        sortBy: sortBy
+      }
+    });
+
   } catch (err) {
     console.error('Error fetching category bookmarks:', err);
-    res.status(500).send('Server error');
+    res.status(500).json({
+      success: false,
+      message: '서버 오류가 발생했습니다',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 };
 
