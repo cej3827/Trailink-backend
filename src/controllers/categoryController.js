@@ -1,10 +1,12 @@
 const pool = require('../config/db');
 
 // 카테고리별 북마크 가져오기 (페이지네이션, 정렬 포함)
+// 방문자 모드와 소유자 모드 지원
 exports.getCategoryBookmarks = async (req, res) => {
   try {
     const { categoryId } = req.params;
-    const { user_id } = req.user;
+    const isAuthenticated = req.user !== null;
+    const user_id = req.user?.user_id;
     
     // 쿼리 파라미터 파싱
     const page = parseInt(req.query.page) || 1;
@@ -30,20 +32,24 @@ exports.getCategoryBookmarks = async (req, res) => {
         orderBy = 'b.created_at DESC';
     }
     
-    console.log(`카테고리별 북마크 조회 - 사용자: ${user_id}, 카테고리: ${categoryId}, 페이지: ${page}, 정렬: ${sortBy}`);
+    const mode = isAuthenticated ? '소유자' : '방문자';
+    console.log(`카테고리별 북마크 조회 - 모드: ${mode}, 사용자: ${user_id || '없음'}, 카테고리: ${categoryId}, 페이지: ${page}, 정렬: ${sortBy}`);
 
-    // 먼저 카테고리가 해당 사용자의 것인지 확인
+    // 카테고리 존재 여부 확인
     const [categoryCheck] = await pool.query(
-      'SELECT category_id FROM category WHERE category_id = ? AND user_id = ?',
-      [categoryId, user_id]
+      'SELECT category_id, user_id FROM category WHERE category_id = ?',
+      [categoryId]
     );
 
     if (categoryCheck.length === 0) {
       return res.status(404).json({ 
         success: false,
-        message: 'Category not found or access denied' 
+        message: '카테고리를 찾을 수 없습니다' 
       });
     }
+
+    // 소유자 여부 확인
+    const isOwner = isAuthenticated && categoryCheck[0].user_id === user_id;
 
     // 전체 북마크 개수 조회
     const [countResult] = await pool.query(
@@ -73,7 +79,8 @@ exports.getCategoryBookmarks = async (req, res) => {
     const hasNextPage = page < totalPages;
     const hasPrevPage = page > 1;
 
-    res.json({
+    // 응답 데이터 구성
+    const response = {
       success: true,
       message: '카테고리별 북마크 조회 성공',
       data: {
@@ -86,9 +93,17 @@ exports.getCategoryBookmarks = async (req, res) => {
           hasNextPage: hasNextPage,
           hasPrevPage: hasPrevPage
         },
-        sortBy: sortBy
+        sortBy: sortBy,
+        viewMode: isAuthenticated ? (isOwner ? 'owner' : 'visitor_authenticated') : 'visitor',
+        permissions: {
+          canEdit: isOwner,
+          canDelete: isOwner,
+          canAdd: isOwner
+        }
       }
-    });
+    };
+
+    res.json(response);
 
   } catch (err) {
     console.error('Error fetching category bookmarks:', err);
