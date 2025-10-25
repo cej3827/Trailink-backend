@@ -128,11 +128,12 @@ exports.getCategories = async (req, res) => {
         c.category_description,
         c.created_at,
         c.updated_at,
+        c.user_id,
         COUNT(b.bookmark_id) as bookmark_count
       FROM category c
       LEFT JOIN bookmark b ON c.category_id = b.category_id
       WHERE c.user_id = ?
-      GROUP BY c.category_id, c.category_name, c.category_description, c.created_at, c.updated_at
+      GROUP BY c.category_id, c.category_name, c.category_description, c.created_at, c.updated_at, c.user_id
       ORDER BY c.created_at DESC
       `, [user_id]);
 
