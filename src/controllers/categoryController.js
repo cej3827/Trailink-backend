@@ -1,12 +1,11 @@
 const pool = require('../config/db');
 
 // 카테고리별 북마크 가져오기 (페이지네이션, 정렬 포함)
-// 방문자 모드와 소유자 모드 지원
 exports.getCategoryBookmarks = async (req, res) => {
   try {
-    const { categoryId } = req.params;
-    const isAuthenticated = req.user !== null;
-    const user_id = req.user?.user_id;
+    // const { categoryId } = req.params;
+    // const isAuthenticated = req.user !== null;
+    // const user_id = req.user?.user_id;
     
     // 쿼리 파라미터 파싱
     const page = parseInt(req.query.page) || 1;
@@ -32,26 +31,24 @@ exports.getCategoryBookmarks = async (req, res) => {
         orderBy = 'b.created_at DESC';
     }
     
-    const mode = isAuthenticated ? '소유자' : '방문자';
-    console.log(`카테고리별 북마크 조회 - 모드: ${mode}, 사용자: ${user_id || '없음'}, 카테고리: ${categoryId}, 페이지: ${page}, 정렬: ${sortBy}`);
+    // const mode = isAuthenticated ? '소유자' : '방문자';
+    // console.log(`카테고리별 북마크 조회 - 모드: ${mode}, 사용자: ${user_id || '없음'}, 카테고리: ${categoryId}, 페이지: ${page}, 정렬: ${sortBy}`);
 
-    // 카테고리 정보 가져오기 (카테고리 ID, 사용자 ID, 이름, 설명)
-    const [categoryCheck] = await pool.query(
+    // 카테고리 정보 가져오기
+    const [category] = await pool.query(
       'SELECT category_id, user_id, category_name, category_description FROM category WHERE category_id = ?',
       [categoryId]
     );
 
-    if (categoryCheck.length === 0) {
+    if (category.length === 0) {
       return res.status(404).json({ 
         success: false,
         message: '카테고리를 찾을 수 없습니다' 
       });
     }
-
-    const categoryInfo = categoryCheck[0];
-    
+  
     // 소유자 여부 확인
-    const isOwner = isAuthenticated && categoryInfo.user_id === user_id;
+    const isOwner = isAuthenticated && category[0].user_id === user_id;
 
     // 전체 북마크 개수 조회
     const [countResult] = await pool.query(
@@ -86,12 +83,7 @@ exports.getCategoryBookmarks = async (req, res) => {
       success: true,
       message: '카테고리별 북마크 조회 성공',
       data: {
-        category: {
-          category_id: categoryInfo.category_id,
-          category_name: categoryInfo.category_name,
-          category_description: categoryInfo.category_description,
-          user_id: categoryInfo.user_id
-        },
+        category: category[0],
         bookmarks: bookmarks,
         pagination: {
           currentPage: page,
@@ -110,6 +102,8 @@ exports.getCategoryBookmarks = async (req, res) => {
         }
       }
     };
+
+    console.log('카테고리 별 북마크 조회:', response);
 
     res.json(response);
 
