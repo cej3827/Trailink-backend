@@ -47,8 +47,8 @@ exports.getCategoryBookmarks = async (req, res) => {
       });
     }
   
-    // 소유자 여부 확인
-    const isOwner = isAuthenticated && category[0].user_id === user_id;
+    // // 소유자 여부 확인
+    // const isOwner = isAuthenticated && category[0].user_id === user_id;
 
     // 전체 북마크 개수 조회
     const [countResult] = await pool.query(
@@ -94,12 +94,12 @@ exports.getCategoryBookmarks = async (req, res) => {
           hasPrevPage: hasPrevPage
         },
         sortBy: sortBy,
-        viewMode: isAuthenticated ? (isOwner ? 'owner' : 'visitor_authenticated') : 'visitor',
-        permissions: {
-          canEdit: isOwner,
-          canDelete: isOwner,
-          canAdd: isOwner
-        }
+        // viewMode: isAuthenticated ? (isOwner ? 'owner' : 'visitor_authenticated') : 'visitor',
+        // permissions: {
+        //   canEdit: isOwner,
+        //   canDelete: isOwner,
+        //   canAdd: isOwner
+        // }
       }
     };
 
