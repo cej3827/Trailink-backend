@@ -35,9 +35,9 @@ exports.getCategoryBookmarks = async (req, res) => {
     const mode = isAuthenticated ? '소유자' : '방문자';
     console.log(`카테고리별 북마크 조회 - 모드: ${mode}, 사용자: ${user_id || '없음'}, 카테고리: ${categoryId}, 페이지: ${page}, 정렬: ${sortBy}`);
 
-    // 카테고리 존재 여부 확인
+    // 카테고리 정보 가져오기 (카테고리 ID, 사용자 ID, 이름, 설명)
     const [categoryCheck] = await pool.query(
-      'SELECT category_id, user_id FROM category WHERE category_id = ?',
+      'SELECT category_id, user_id, category_name, category_description FROM category WHERE category_id = ?',
       [categoryId]
     );
 
@@ -48,8 +48,10 @@ exports.getCategoryBookmarks = async (req, res) => {
       });
     }
 
+    const categoryInfo = categoryCheck[0];
+    
     // 소유자 여부 확인
-    const isOwner = isAuthenticated && categoryCheck[0].user_id === user_id;
+    const isOwner = isAuthenticated && categoryInfo.user_id === user_id;
 
     // 전체 북마크 개수 조회
     const [countResult] = await pool.query(
@@ -84,6 +86,12 @@ exports.getCategoryBookmarks = async (req, res) => {
       success: true,
       message: '카테고리별 북마크 조회 성공',
       data: {
+        category: {
+          category_id: categoryInfo.category_id,
+          category_name: categoryInfo.category_name,
+          category_description: categoryInfo.category_description,
+          user_id: categoryInfo.user_id
+        },
         bookmarks: bookmarks,
         pagination: {
           currentPage: page,
