@@ -4,7 +4,7 @@ const { getCategoryBookmarks, getCategories, addCategory, deleteCategory } = req
 const authMiddleware = require('../middleware/authMiddleware');
 const { optionalAuth } = require('../middleware/authMiddleware');
 
-router.get('/:categoryId/bookmarks', optionalAuth, getCategoryBookmarks);
+router.get('/:categoryId/bookmarks', getCategoryBookmarks);
 // router.get('/:categoryId', getCategoryBookmarks)
 router.get('/', authMiddleware, getCategories);
 router.post('/', authMiddleware, addCategory);
