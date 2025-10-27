@@ -3,7 +3,7 @@ const pool = require('../config/db');
 // 카테고리별 북마크 가져오기 (페이지네이션, 정렬 포함)
 exports.getCategoryBookmarks = async (req, res) => {
   try {
-    // const { categoryId } = req.params;
+    const { categoryId } = req.params;
     // const isAuthenticated = req.user !== null;
     // const user_id = req.user?.user_id;
     
